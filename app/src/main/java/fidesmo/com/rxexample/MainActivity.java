@@ -2,7 +2,6 @@ package fidesmo.com.rxexample;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
@@ -12,8 +11,8 @@ import rx.subjects.PublishSubject;
 
 public class MainActivity extends AppCompatActivity implements EmailFragment.OnFragmentInteractionListener {
 
-    private Fragment newFragment;
     private PublishSubject<String> fromFragment = PublishSubject.create();
+    private String fragmentTag = "FRAGMENT";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,12 +30,14 @@ public class MainActivity extends AppCompatActivity implements EmailFragment.OnF
 
     // Bound with UI
     public void onButtonClicked(View button) {
+        Fragment newFragment = getSupportFragmentManager().findFragmentByTag(fragmentTag);
+
         if (newFragment == null) {
             newFragment = EmailFragment.newInstance("hello", "fragment");
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.fragment_container, newFragment);
-            transaction.addToBackStack(null);
-            transaction.commit();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .add(R.id.fragment_container, newFragment, fragmentTag)
+                    .commit();
         }
     }
 
@@ -44,9 +45,10 @@ public class MainActivity extends AppCompatActivity implements EmailFragment.OnF
     public void onFragmentInteraction(String email) {
         fromFragment.onNext(email);
 
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.remove(newFragment);
-        transaction.commit();
-        newFragment = null;
+        Fragment existing = getSupportFragmentManager().findFragmentByTag(fragmentTag);
+        getSupportFragmentManager()
+                .beginTransaction()
+                .remove(existing)
+                .commit();
     }
 }
